@@ -1,0 +1,6 @@
+# 리팩토링 전 원본 단일 파일 (로컬 보관용, 배포 제외)
+dasibom.html
+
+# OS / editor noise
+.DS_Store
+Thumbs.db

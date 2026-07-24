@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>다시봄 — 저장하고, 다시 보는 습관</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">다시<span>봄</span> 🌱</div>
+    <div class="hbtns2">
+      <button class="iconbtn" id="selBtn" data-action="toggle-select-mode">☑️ 선택</button>
+      <button class="iconbtn" data-action="export-data">⬇ 내보내기</button>
+      <button class="iconbtn" data-action="import-data">⬆ 가져오기</button>
+      <input type="file" id="importFile" accept=".json" style="display:none">
+      <div class="streak" id="streak"></div>
+    </div>
+  </header>
+
+  <!-- 빠른 저장 -->
+  <div class="savebox">
+    <div class="row">
+      <input type="url" id="urlInput" placeholder="링크를 붙여넣으면 알아서 분류해요" autocomplete="off">
+      <button class="primary" data-action="save-bookmark">저장</button>
+    </div>
+    <div class="detected" id="detected">
+      <div class="drow"><span class="src-chip" id="detSrc"></span></div>
+      <div class="drow">
+        <input class="mini" id="titleInput" placeholder="제목 (선택)">
+        <select class="mini" id="colSelect"></select>
+      </div>
+      <div class="drow">
+        <input class="mini" id="memoInput" placeholder="메모 (선택)">
+        <input class="mini" id="tagInput" placeholder="태그 (쉼표 구분)">
+      </div>
+    </div>
+  </div>
+
+  <!-- 다시 보기 유도 -->
+  <div class="hero" id="hero"></div>
+
+  <!-- 잊혀진 북마크 -->
+  <div class="forgot" id="forgot" data-action="show-forgotten"></div>
+
+  <!-- 검색 -->
+  <div class="searchrow">
+    <input type="search" id="searchInput" placeholder="🔍  제목, 메모, 태그, 링크 전체 검색">
+  </div>
+
+  <!-- 출처별 필터 -->
+  <div class="sectionlabel">출처</div>
+  <div class="filters" id="filters"></div>
+
+  <!-- 컬렉션 -->
+  <div class="sectionlabel">컬렉션</div>
+  <div class="filters" id="collections"></div>
+
+  <!-- 목록 -->
+  <div class="grid" id="grid"></div>
+
+  <footer>모든 기능이 무료예요 🎉</footer>
+</div>
+
+<!-- 일괄 작업 바 -->
+<div class="bulkbar" id="bulkbar">
+  <span class="count" id="bulkCount"></span>
+  <button data-action="bulk-seen">✓ 봄 처리</button>
+  <button data-action="open-move-modal">📁 컬렉션 이동</button>
+  <button class="danger" data-action="bulk-delete">🗑 삭제</button>
+  <button data-action="toggle-select-mode">취소</button>
+</div>
+
+<!-- 모달 -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
