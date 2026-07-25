@@ -41,14 +41,14 @@ export function render() {
   grid.innerHTML = list.map(i => {
     const s = SOURCES[i.src];
     const c = i.col ? colById(i.col) : null;
-    const yt = i.src === 'youtube' ? ytThumb(i.url) : null;
-    const thumbStyle = yt ? `background-image:url('${yt}')` : `background: linear-gradient(135deg, ${s.color}22, ${s.color}0d)`;
+    const img = i.thumb || (i.src === 'youtube' ? ytThumb(i.url) : null);
+    const thumbStyle = img ? `background-image:url("${img}")` : `background: linear-gradient(135deg, ${s.color}22, ${s.color}0d)`;
     const sel = view.selected.has(i.id);
     return `
     <div class="card ${i.seen ? 'seen' : ''} ${view.selMode ? 'selectable' : ''} ${sel ? 'selected' : ''}" ${view.selMode ? `data-action="toggle-sel" data-id="${i.id}"` : ''}>
       ${view.selMode ? `<div class="checkmark">✓</div>` : ''}
       <div class="thumb" style="${thumbStyle}">
-        ${yt ? '' : s.icon}
+        ${img ? '' : s.icon}
         ${!i.seen ? '<span class="newdot">안 봄</span>' : ''}
         ${i.pinned ? '<span class="pinbadge">📌</span>' : ''}
       </div>

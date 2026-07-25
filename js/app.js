@@ -62,19 +62,62 @@ document.addEventListener('contextmenu', e => {
   actions.deleteCollection(chip.dataset.colId);
 });
 
-// ── 저장 입력창: 출처 자동 감지 ─────────────────
+// ── 저장 입력창: 출처 자동 감지 + 링크 정보 가져오기 ─────────────────
 const urlInput = document.getElementById('urlInput');
+let metaTimer = null;
+let metaSeq = 0;
+
+function resetDraftMeta() {
+  document.getElementById('thumbInput').value = '';
+  document.getElementById('detMeta').style.display = 'none';
+  document.getElementById('detThumb').style.display = 'none';
+  document.getElementById('detStatus').textContent = '';
+}
+
+async function loadMeta(url, seq) {
+  document.getElementById('detMeta').style.display = 'flex';
+  const statusEl = document.getElementById('detStatus');
+  statusEl.textContent = '🔎 링크 정보를 가져오는 중…';
+  let m = {};
+  try { m = await window.dasibom.fetchMeta(url); } catch (e) { m = {}; }
+  if (seq !== metaSeq) return; // 그새 URL이 바뀌면 결과 폐기
+  if (m.thumb) {
+    const img = document.getElementById('detThumb');
+    img.src = m.thumb;
+    img.style.display = 'block';
+    document.getElementById('thumbInput').value = m.thumb;
+  }
+  if (m.title) {
+    const t = document.getElementById('titleInput');
+    if (!t.value.trim()) t.value = m.title;
+  }
+  if (m.title || m.thumb) statusEl.textContent = '✓ 제목·썸네일을 가져왔어요 (수정 가능)';
+  else statusEl.textContent = 'ⓘ 공개 정보를 찾지 못했어요 — 제목을 직접 입력하세요';
+}
+
 urlInput.addEventListener('input', () => {
   const v = urlInput.value.trim();
   const box = document.getElementById('detected');
   if (v.length > 8 && v.includes('.')) {
-    const s = SOURCES[detectSource(normalizeUrl(v))];
+    const norm = normalizeUrl(v);
+    const s = SOURCES[detectSource(norm)];
     const det = document.getElementById('detSrc');
     det.textContent = `${s.icon} ${s.name}(으)로 분류돼요`;
     det.style.color = s.color;
     renderColSelect();
     box.classList.add('on');
-  } else box.classList.remove('on');
+    if (desktop) {
+      metaSeq++;
+      const seq = metaSeq;
+      resetDraftMeta();
+      clearTimeout(metaTimer);
+      metaTimer = setTimeout(() => loadMeta(norm, seq), 500);
+    }
+  } else {
+    box.classList.remove('on');
+    metaSeq++;
+    resetDraftMeta();
+  }
 });
 urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') actions.saveBookmark(); });
 

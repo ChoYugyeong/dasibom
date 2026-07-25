@@ -7,5 +7,6 @@ contextBridge.exposeInMainWorld('dasibom', {
   save:        (data) => ipcRenderer.invoke('vault:save', data),
   chooseVault: () => ipcRenderer.invoke('vault:choose'),
   vaultPath:   () => ipcRenderer.invoke('vault:path'),
-  reveal:      () => ipcRenderer.invoke('vault:reveal')
+  reveal:      () => ipcRenderer.invoke('vault:reveal'),
+  fetchMeta:   (url) => ipcRenderer.invoke('meta:fetch', url)
 });

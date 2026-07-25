@@ -20,11 +20,14 @@ export function saveBookmark() {
     id: Date.now(), url: v, title,
     memo: document.getElementById('memoInput').value.trim(),
     src, tags, col: document.getElementById('colSelect').value || null,
+    thumb: document.getElementById('thumbInput').value || null,
     pinned: false, saved: Date.now(), seen: false
   });
   persist();
-  ['urlInput', 'titleInput', 'memoInput', 'tagInput'].forEach(id => document.getElementById(id).value = '');
+  ['urlInput', 'titleInput', 'memoInput', 'tagInput', 'thumbInput'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('detected').classList.remove('on');
+  document.getElementById('detMeta').style.display = 'none';
+  document.getElementById('detThumb').style.display = 'none';
   toast(`${SOURCES[src].icon} ${SOURCES[src].name}에 저장했어요!`);
   view.activeFilter = 'all';
   render(); renderHero();

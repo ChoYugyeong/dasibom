@@ -1,6 +1,7 @@
 const { app, protocol, net, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs/promises');
+const { fetchMeta } = require('./metadata');
 
 const ROOT = path.join(__dirname, '..');
 const CONFIG_FILE = path.join(app.getPath('userData'), 'config.json');
@@ -34,6 +35,11 @@ ipcMain.handle('vault:choose', async () => {
   if (r.canceled || !r.filePaths[0]) return null;
   await writeJson(CONFIG_FILE, { vault: r.filePaths[0] });
   return path.join(r.filePaths[0], 'bookmarks.json');
+});
+
+// 링크의 공개 제목·썸네일 가져오기 (로그인 불필요)
+ipcMain.handle('meta:fetch', async (_e, url) => {
+  try { return await fetchMeta(url); } catch (e) { return {}; }
 });
 
 // ── 정적 파일을 app:// 로 서빙 (ES 모듈 로딩을 위해 file:// 대신 사용) ──
