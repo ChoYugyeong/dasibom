@@ -1,6 +1,13 @@
 # 리팩토링 전 원본 단일 파일 (로컬 보관용, 배포 제외)
 dasibom.html
 
+# 의존성 / 빌드 산출물
+node_modules/
+dist/
+
+# 로컬 데이터 파일 (공개 저장소에 개인 북마크가 올라가지 않도록)
+bookmarks.json
+
 # OS / editor noise
 .DS_Store
 Thumbs.db

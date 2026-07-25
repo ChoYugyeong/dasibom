@@ -1,10 +1,13 @@
 // 진입점 — 이벤트 위임으로 모든 data-action 버튼을 한 곳에서 처리
 import { SOURCES } from './constants.js';
-import { persist } from './store.js';
+import { initStore, reloadFromVault, persist } from './store.js';
 import { detectSource, normalizeUrl } from './utils.js';
+import { toast } from './toast.js';
 import * as actions from './actions.js';
 import * as modals from './modals.js';
 import { render, renderHero, renderColSelect } from './view.js';
+
+const desktop = !!window.dasibom;
 
 const clickHandlers = {
   'toggle-select-mode': () => actions.toggleSelectMode(),
@@ -31,8 +34,18 @@ const clickHandlers = {
   'pick-color':         el => modals.pickColor(el),
   'create-collection':  () => modals.createCollection(),
   'save-edit':          el => modals.saveEdit(Number(el.dataset.id)),
-  'close-modal':        () => modals.closeModal()
+  'close-modal':        () => modals.closeModal(),
+  'choose-vault':       () => chooseVault(),
+  'reveal-vault':       () => window.dasibom.reveal()
 };
+
+async function chooseVault() {
+  const p = await window.dasibom.chooseVault();
+  if (!p) return;
+  await reloadFromVault();
+  render(); renderHero();
+  toast('📁 저장 위치를 바꿨어요');
+}
 
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-action]');
@@ -72,6 +85,12 @@ document.getElementById('modalBg').addEventListener('click', e => {
 });
 
 // ── 시작 ───────────────────────────────
-persist();
-render();
-renderHero();
+async function boot() {
+  // 데스크톱 앱 모드면 저장 위치 버튼을 노출
+  if (desktop) document.getElementById('vaultBtns').style.display = 'flex';
+  await initStore();
+  persist();
+  render();
+  renderHero();
+}
+boot();
