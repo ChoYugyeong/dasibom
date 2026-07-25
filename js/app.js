@@ -5,6 +5,7 @@ import { detectSource, normalizeUrl } from './utils.js';
 import { toast } from './toast.js';
 import * as actions from './actions.js';
 import * as modals from './modals.js';
+import { openYoutubeModal } from './youtubeModal.js';
 import { render, renderHero, renderColSelect } from './view.js';
 
 const desktop = !!window.dasibom;
@@ -13,6 +14,7 @@ const clickHandlers = {
   'toggle-select-mode': () => actions.toggleSelectMode(),
   'export-data':        () => actions.exportData(),
   'import-data':        () => document.getElementById('importFile').click(),
+  'import-external':    () => document.getElementById('importExternalFile').click(),
   'save-bookmark':      () => actions.saveBookmark(),
   'show-forgotten':     () => actions.showForgotten(),
   'shuffle-hero':       () => renderHero(),
@@ -36,7 +38,8 @@ const clickHandlers = {
   'save-edit':          el => modals.saveEdit(Number(el.dataset.id)),
   'close-modal':        () => modals.closeModal(),
   'choose-vault':       () => chooseVault(),
-  'reveal-vault':       () => window.dasibom.reveal()
+  'reveal-vault':       () => window.dasibom.reveal(),
+  'open-youtube-modal': () => openYoutubeModal()
 };
 
 async function chooseVault() {
@@ -123,6 +126,7 @@ urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') actions.saveB
 
 document.getElementById('searchInput').addEventListener('input', () => render());
 document.getElementById('importFile').addEventListener('change', e => actions.importData(e));
+document.getElementById('importExternalFile').addEventListener('change', e => actions.importExternal(e));
 document.getElementById('modalBg').addEventListener('click', e => {
   if (e.target === e.currentTarget) modals.closeModal();
 });

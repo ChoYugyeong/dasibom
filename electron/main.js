@@ -2,6 +2,9 @@ const { app, protocol, net, BrowserWindow, ipcMain, dialog, shell } = require('e
 const path = require('path');
 const fs = require('fs/promises');
 const { fetchMeta } = require('./metadata');
+const tokenStore = require('./tokenStore');
+const ytAuth = require('./youtube-auth');
+const yt = require('./youtube');
 
 const ROOT = path.join(__dirname, '..');
 const CONFIG_FILE = path.join(app.getPath('userData'), 'config.json');
@@ -40,6 +43,46 @@ ipcMain.handle('vault:choose', async () => {
 // 링크의 공개 제목·썸네일 가져오기 (로그인 불필요)
 ipcMain.handle('meta:fetch', async (_e, url) => {
   try { return await fetchMeta(url); } catch (e) { return {}; }
+});
+
+// ── 유튜브 연동 (OAuth) ───────────────────
+async function getValidAccessToken() {
+  const data = await tokenStore.load();
+  if (!data.tokens || !data.tokens.refresh_token) throw new Error('NOT_CONNECTED');
+  if (data.tokens.expiry_date - 60000 > Date.now()) return data.tokens.access_token;
+  const fresh = await ytAuth.refreshAccessToken({
+    clientId: data.clientId, clientSecret: data.clientSecret, refreshToken: data.tokens.refresh_token
+  });
+  await tokenStore.saveTokens(fresh);
+  return fresh.access_token;
+}
+
+ipcMain.handle('yt:status', async () => {
+  const data = await tokenStore.load();
+  return { hasCreds: !!data.clientId, connected: !!(data.tokens && data.tokens.refresh_token) };
+});
+ipcMain.handle('yt:saveCreds', async (_e, { clientId, clientSecret }) => {
+  await tokenStore.saveCreds((clientId || '').trim(), (clientSecret || '').trim());
+  return true;
+});
+ipcMain.handle('yt:connect', async () => {
+  const data = await tokenStore.load();
+  const tokens = await ytAuth.authorize({ clientId: data.clientId, clientSecret: data.clientSecret });
+  await tokenStore.saveTokens(tokens);
+  return true;
+});
+ipcMain.handle('yt:disconnect', async () => { await tokenStore.clearTokens(); return true; });
+ipcMain.handle('yt:listPlaylists', async () => {
+  const token = await getValidAccessToken();
+  return yt.listPlaylists(token);
+});
+ipcMain.handle('yt:importLiked', async () => {
+  const token = await getValidAccessToken();
+  return yt.importLiked(token);
+});
+ipcMain.handle('yt:importPlaylist', async (_e, { id, title }) => {
+  const token = await getValidAccessToken();
+  return yt.importPlaylist(id, title, token);
 });
 
 // ── 정적 파일을 app:// 로 서빙 (ES 모듈 로딩을 위해 file:// 대신 사용) ──

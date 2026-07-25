@@ -4,6 +4,7 @@ import { state, items, colById, persist } from './store.js';
 import { detectSource, normalizeUrl } from './utils.js';
 import { toast } from './toast.js';
 import { view, render, renderHero, updateBulkCount } from './view.js';
+import { parseImportFile } from './importers.js';
 
 // ── 저장 ───────────────────────────────
 export function saveBookmark() {
@@ -168,4 +169,69 @@ export function importData(ev) {
   };
   reader.readAsText(file);
   ev.target.value = '';
+}
+
+// ── 외부 내보내기 가져오기 (Google Takeout / 인스타그램 "내 정보 다운로드") ──
+function readAsText(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+    r.readAsText(file);
+  });
+}
+
+// URL 기준 중복 제거하며 항목들을 병합. { added, duplicate } 반환.
+export function mergeItems(newItems, { tag } = {}) {
+  const existingUrls = new Set(state.items.map(i => i.url));
+  let added = 0, duplicate = 0;
+  for (const raw of newItems) {
+    if (existingUrls.has(raw.url)) { duplicate++; continue; }
+    const it = {
+      id: Date.now() * 1000 + added, memo: '', col: null, pinned: false, seen: false,
+      tags: [], thumb: null, ...raw
+    };
+    if (tag && !it.tags.includes(tag)) it.tags = [...it.tags, tag];
+    existingUrls.add(it.url);
+    state.items.push(it);
+    added++;
+  }
+  if (added) { persist(); render(); renderHero(); }
+  return { added, duplicate };
+}
+
+export async function importExternal(ev) {
+  const files = Array.from(ev.target.files || []);
+  ev.target.value = '';
+  if (!files.length) return;
+
+  const existingUrls = new Set(state.items.map(i => i.url));
+  let added = 0, duplicate = 0, backupSkipped = 0, unrecognized = 0;
+
+  for (const file of files) {
+    let text;
+    try { text = await readAsText(file); } catch (e) { unrecognized++; continue; }
+    const parsed = parseImportFile(file.name, text);
+    if (parsed === null) { backupSkipped++; continue; } // 다시봄 백업 파일 → 이 가져오기에서는 건너뜀
+    if (!parsed.length) { unrecognized++; continue; }
+    for (const it of parsed) {
+      if (existingUrls.has(it.url)) { duplicate++; continue; }
+      existingUrls.add(it.url);
+      state.items.push(it);
+      added++;
+    }
+  }
+
+  persist(); render(); renderHero();
+
+  if (!added) {
+    if (backupSkipped) toast(`백업 파일은 '⬆ 가져오기' 버튼을 이용하세요`);
+    else if (duplicate) toast('이미 저장된 항목들이에요');
+    else toast('가져올 수 있는 항목을 찾지 못했어요');
+    return;
+  }
+  const parts = [`⬆ ${added}개를 가져왔어요`];
+  if (duplicate) parts.push(`중복 ${duplicate}개 제외`);
+  if (backupSkipped) parts.push(`백업 파일 ${backupSkipped}개는 '가져오기'를 이용하세요`);
+  toast(parts.join(' · '));
 }

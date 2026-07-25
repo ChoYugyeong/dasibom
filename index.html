@@ -15,11 +15,14 @@
       <span id="vaultBtns" style="display:none; gap:6px;">
         <button class="iconbtn" data-action="choose-vault" title="북마크를 저장할 폴더 지정">📁 저장 위치</button>
         <button class="iconbtn" data-action="reveal-vault" title="저장 파일을 탐색기에서 열기">📂 파일 열기</button>
+        <button class="iconbtn" data-action="open-youtube-modal" title="유튜브 좋아요·재생목록 가져오기">▶️ 유튜브 연동</button>
       </span>
       <button class="iconbtn" id="selBtn" data-action="toggle-select-mode">☑️ 선택</button>
       <button class="iconbtn" data-action="export-data">⬇ 내보내기</button>
       <button class="iconbtn" data-action="import-data">⬆ 가져오기</button>
       <input type="file" id="importFile" accept=".json" style="display:none">
+      <button class="iconbtn" data-action="import-external" title="Google Takeout(유튜브) · 인스타그램 &quot;내 정보 다운로드&quot; 파일 가져오기">📥 외부 가져오기</button>
+      <input type="file" id="importExternalFile" accept=".json,.csv" multiple style="display:none">
       <div class="streak" id="streak"></div>
     </div>
   </header>

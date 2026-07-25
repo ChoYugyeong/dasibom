@@ -8,5 +8,14 @@ contextBridge.exposeInMainWorld('dasibom', {
   chooseVault: () => ipcRenderer.invoke('vault:choose'),
   vaultPath:   () => ipcRenderer.invoke('vault:path'),
   reveal:      () => ipcRenderer.invoke('vault:reveal'),
-  fetchMeta:   (url) => ipcRenderer.invoke('meta:fetch', url)
+  fetchMeta:   (url) => ipcRenderer.invoke('meta:fetch', url),
+  youtube: {
+    status:         () => ipcRenderer.invoke('yt:status'),
+    saveCreds:      (creds) => ipcRenderer.invoke('yt:saveCreds', creds),
+    connect:        () => ipcRenderer.invoke('yt:connect'),
+    disconnect:     () => ipcRenderer.invoke('yt:disconnect'),
+    listPlaylists:  () => ipcRenderer.invoke('yt:listPlaylists'),
+    importLiked:    () => ipcRenderer.invoke('yt:importLiked'),
+    importPlaylist: (id, title) => ipcRenderer.invoke('yt:importPlaylist', { id, title })
+  }
 });
