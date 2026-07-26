@@ -73,6 +73,17 @@ export function togglePin(id) {
   }
 }
 
+export async function copyItemUrl(id) {
+  const it = items().find(i => i.id === id);
+  if (!it) return;
+  try {
+    await navigator.clipboard.writeText(it.url);
+    toast('링크를 복사했어요');
+  } catch (e) {
+    toast('복사에 실패했어요');
+  }
+}
+
 // ── 삭제 + 취소 ───────────────────────────
 let lastDeleted = [];
 export function removeItem(id) {

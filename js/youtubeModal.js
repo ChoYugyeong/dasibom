@@ -2,13 +2,14 @@
 import { esc } from './utils.js';
 import { toast } from './toast.js';
 import { mergeItems } from './actions.js';
+import { icon } from './icons.js';
 
 function box() { return document.getElementById('modalBox'); }
 function openBg() { document.getElementById('modalBg').classList.add('on'); }
 function closeBg() { document.getElementById('modalBg').classList.remove('on'); }
 
 export async function openYoutubeModal() {
-  box().innerHTML = `<h3>▶️ 유튜브 연동</h3><p style="color:var(--sub); font-size:13px">불러오는 중…</p>`;
+  box().innerHTML = `<h3>${icon('play', { size: 18 })} 유튜브 연동</h3><p style="color:var(--sub); font-size:13px">불러오는 중…</p>`;
   openBg();
   const status = await window.dasibom.youtube.status();
   if (!status.connected) renderCredsForm(status.hasCreds);
@@ -17,7 +18,7 @@ export async function openYoutubeModal() {
 
 function renderCredsForm(hasCreds) {
   box().innerHTML = `
-    <h3>▶️ 유튜브 연동</h3>
+    <h3>${icon('play', { size: 18 })} 유튜브 연동</h3>
     <p style="font-size:13px; color:var(--sub); line-height:1.6; margin-bottom:10px">
       Google Cloud에서 발급받은 <b>OAuth 클라이언트</b> 정보를 입력하세요.
       README의 "유튜브 연동 설정"에 발급 절차가 있어요.
@@ -34,11 +35,11 @@ function renderCredsForm(hasCreds) {
 
 function renderConnected() {
   box().innerHTML = `
-    <h3>▶️ 유튜브 연동</h3>
-    <p style="font-size:13px; color:#2f9e44; margin-bottom:12px">✅ 연결됐어요</p>
+    <h3>${icon('play', { size: 18 })} 유튜브 연동</h3>
+    <p style="font-size:13px; color:#2f9e44; display:flex; align-items:center; gap:6px; margin-bottom:12px">${icon('checkCircle')} 연결됐어요</p>
     <div class="collist">
-      <button data-yt="import-liked">❤️ 좋아요 표시한 동영상 가져오기</button>
-      <button data-yt="show-playlists">🗂️ 재생목록에서 가져오기</button>
+      <button data-yt="import-liked">${icon('heart')} 좋아요 표시한 동영상 가져오기</button>
+      <button data-yt="show-playlists">${icon('library')} 재생목록에서 가져오기</button>
     </div>
     <div class="mbtns">
       <button class="cancel" data-yt="disconnect">연결 해제</button>
@@ -47,7 +48,7 @@ function renderConnected() {
 }
 
 function renderProgress(msg) {
-  box().innerHTML = `<h3>▶️ 유튜브 연동</h3><p style="color:var(--sub); font-size:13px">${esc(msg)}</p>`;
+  box().innerHTML = `<h3>${icon('play', { size: 18 })} 유튜브 연동</h3><p style="color:var(--sub); font-size:13px; display:flex; align-items:center; gap:6px">${icon('loader', { className: 'spin' })} ${esc(msg)}</p>`;
 }
 
 async function renderPlaylists() {
@@ -56,15 +57,15 @@ async function renderPlaylists() {
   try { playlists = await window.dasibom.youtube.listPlaylists(); }
   catch (e) { toast('재생목록을 불러오지 못했어요: ' + e.message); renderConnected(); return; }
   if (!playlists.length) {
-    box().innerHTML = `<h3>🗂️ 재생목록</h3><p style="font-size:13px; color:var(--sub)">가져올 재생목록이 없어요.</p>
+    box().innerHTML = `<h3>${icon('library', { size: 18 })} 재생목록</h3><p style="font-size:13px; color:var(--sub)">가져올 재생목록이 없어요.</p>
       <div class="mbtns"><button class="cancel" data-yt="back">뒤로</button></div>`;
     return;
   }
   box().innerHTML = `
-    <h3>🗂️ 재생목록 선택</h3>
+    <h3>${icon('library', { size: 18 })} 재생목록 선택</h3>
     <div class="collist">
       ${playlists.map(p => `
-        <label style="display:flex; align-items:center; gap:8px; background:#faf9f6; border:1px solid var(--line); border-radius:10px; padding:11px 12px; cursor:pointer;">
+        <label style="display:flex; align-items:center; gap:8px; background:var(--muted); border:1px solid var(--line); border-radius:10px; padding:11px 12px; cursor:pointer;">
           <input type="checkbox" class="pl-check" value="${esc(p.id)}" data-title="${esc(p.title)}">
           <span>${esc(p.title)} <span style="color:var(--sub); font-size:12px">(${p.count}개)</span></span>
         </label>`).join('')}

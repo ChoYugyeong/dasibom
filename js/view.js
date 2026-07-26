@@ -2,6 +2,7 @@
 import { SOURCES } from './constants.js';
 import { state, items, colById } from './store.js';
 import { esc, daysAgo, ytThumb } from './utils.js';
+import { icon } from './icons.js';
 
 export const view = {
   activeFilter: 'all',
@@ -9,7 +10,14 @@ export const view = {
   forgotMode: false,
   selMode: false,
   selected: new Set(),
-  heroItem: null
+  heroItem: null,
+  sortBy: 'newest'
+};
+
+const SORTERS = {
+  newest: (a, b) => b.saved - a.saved,
+  oldest: (a, b) => a.saved - b.saved,
+  title: (a, b) => a.title.localeCompare(b.title, 'ko')
 };
 
 export function render() {
@@ -31,7 +39,8 @@ export function render() {
     )) return false;
     return true;
   });
-  list.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.saved - a.saved);
+  const sortFn = SORTERS[view.sortBy] || SORTERS.newest;
+  list.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || sortFn(a, b));
 
   const grid = document.getElementById('grid');
   if (!list.length) {
@@ -45,28 +54,29 @@ export function render() {
     const thumbStyle = img ? `background-image:url("${img}")` : `background: linear-gradient(135deg, ${s.color}22, ${s.color}0d)`;
     const sel = view.selected.has(i.id);
     return `
-    <div class="card ${i.seen ? 'seen' : ''} ${view.selMode ? 'selectable' : ''} ${sel ? 'selected' : ''}" ${view.selMode ? `data-action="toggle-sel" data-id="${i.id}"` : ''}>
-      ${view.selMode ? `<div class="checkmark">✓</div>` : ''}
+    <div class="card ${i.seen ? 'seen' : ''} ${view.selMode ? 'selectable' : ''} ${sel ? 'selected' : ''}" ${view.selMode ? `data-action="toggle-sel" data-id="${i.id}" role="button" tabindex="0"` : ''}>
+      ${view.selMode ? `<div class="checkmark">${icon('check', { size: 14 })}</div>` : ''}
       <div class="thumb" style="${thumbStyle}">
         ${img ? '' : s.icon}
         ${!i.seen ? '<span class="newdot">안 봄</span>' : ''}
-        ${i.pinned ? '<span class="pinbadge">📌</span>' : ''}
+        ${i.pinned ? `<span class="pinbadge">${icon('pin', { size: 12 })}</span>` : ''}
       </div>
       <div class="cbody">
         <div class="csrc" style="color:${s.color}">${s.icon} ${s.name}
           ${c ? `<span class="colbadge" style="background:${c.color}">${c.icon} ${esc(c.name)}</span>` : ''}
         </div>
         <div class="ctitle">${esc(i.title)}</div>
-        ${i.memo ? `<div class="cmemo">📝 ${esc(i.memo)}</div>` : ''}
+        ${i.memo ? `<div class="cmemo">${esc(i.memo)}</div>` : ''}
         ${(i.tags || []).length ? `<div class="ctags">${i.tags.map(t => `<span>#${esc(t)}</span>`).join('')}</div>` : ''}
         <div class="cfoot">
           <span class="cdate">${daysAgo(i.saved)}</span>
           ${view.selMode ? '' : `<div class="cbtns">
-            <a class="open" href="${esc(i.url)}" target="_blank" rel="noopener" data-action="open-item" data-id="${i.id}">열기</a>
-            <button data-action="toggle-seen" data-id="${i.id}" title="봄/안 봄">${i.seen ? '↩️' : '✓'}</button>
-            <button class="${i.pinned ? 'pinned' : ''}" data-action="toggle-pin" data-id="${i.id}" title="핀 고정">📌</button>
-            <button data-action="edit-item" data-id="${i.id}" title="편집">✎</button>
-            <button class="del" data-action="remove-item" data-id="${i.id}" title="삭제">✕</button>
+            <a class="open" href="${esc(i.url)}" target="_blank" rel="noopener" data-action="open-item" data-id="${i.id}" title="열기" aria-label="열기">${icon('externalLink')}</a>
+            <button data-action="toggle-seen" data-id="${i.id}" title="${i.seen ? '안 봄으로 표시' : '봄으로 표시'}" aria-label="${i.seen ? '안 봄으로 표시' : '봄으로 표시'}">${icon(i.seen ? 'eyeOff' : 'eye')}</button>
+            <button data-action="copy-item" data-id="${i.id}" title="링크 복사" aria-label="링크 복사">${icon('copy')}</button>
+            <button class="${i.pinned ? 'pinned' : ''}" data-action="toggle-pin" data-id="${i.id}" title="핀 고정" aria-label="핀 고정">${icon('pin')}</button>
+            <button data-action="edit-item" data-id="${i.id}" title="편집" aria-label="편집">${icon('pencil')}</button>
+            <button class="del" data-action="remove-item" data-id="${i.id}" title="삭제" aria-label="삭제">${icon('trash')}</button>
           </div>`}
         </div>
       </div>
@@ -100,7 +110,7 @@ export function renderHero() {
     <div class="hmeta">${s.name} · ${(it.tags || []).map(t => '#' + esc(t)).join(' ')}</div>
     <div class="hbtns">
       <a class="go" href="${esc(it.url)}" target="_blank" rel="noopener" data-action="open-item" data-id="${it.id}">지금 보기 →</a>
-      <button class="shuffle" data-action="shuffle-hero">다른 거 🔀</button>
+      <button class="shuffle" data-action="shuffle-hero">${icon('shuffle')} 다른 거</button>
     </div>`;
 }
 
@@ -125,7 +135,7 @@ function renderCollections() {
         data-action="set-col" data-col-id="${c.id}"
         title="우클릭(길게 누르기)으로 삭제">${c.icon} ${esc(c.name)} <span class="cnt">${cnt(c.id)}</span></button>`
     ).join('') +
-    `<button class="chip addcol" data-action="open-col-modal">＋ 새 컬렉션</button>`;
+    `<button class="chip addcol" data-action="open-col-modal">${icon('plus', { size: 14 })} 새 컬렉션</button>`;
 }
 
 function renderForgot() {
@@ -134,13 +144,13 @@ function renderForgot() {
   const el = document.getElementById('forgot');
   if (forgotten.length) {
     el.classList.add('on');
-    el.innerHTML = `⏰ 일주일 넘게 잠들어 있는 북마크가 <b>${forgotten.length}개</b> 있어요 — 눌러서 보기`;
+    el.innerHTML = `${icon('clock')} 일주일 넘게 잠들어 있는 북마크가 <b>${forgotten.length}개</b> 있어요 — 눌러서 보기`;
   } else el.classList.remove('on');
 }
 
 function renderStreak() {
   const seen = items().filter(i => i.seen).length;
-  document.getElementById('streak').textContent = `👀 ${seen} / ${items().length}`;
+  document.getElementById('streak').innerHTML = `${icon('eye')} ${seen} / ${items().length}`;
 }
 
 export function renderColSelect(sel) {

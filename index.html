@@ -6,6 +6,13 @@
 <title>다시봄 — 저장하고, 다시 보는 습관</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="css/style.css">
+<script>
+  // 테마 깜빡임 방지 — 페인트 전에 저장된 테마를 적용
+  try {
+    const t = localStorage.getItem('dasibom-theme');
+    if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -13,16 +20,17 @@
     <div class="logo">다시<span>봄</span> 🌱</div>
     <div class="hbtns2">
       <span id="vaultBtns" style="display:none; gap:6px;">
-        <button class="iconbtn" data-action="choose-vault" title="북마크를 저장할 폴더 지정">📁 저장 위치</button>
-        <button class="iconbtn" data-action="reveal-vault" title="저장 파일을 탐색기에서 열기">📂 파일 열기</button>
-        <button class="iconbtn" data-action="open-youtube-modal" title="유튜브 좋아요·재생목록 가져오기">▶️ 유튜브 연동</button>
+        <button class="iconbtn" data-action="choose-vault" title="북마크를 저장할 폴더 지정"><span class="icon-slot" data-icon="folder"></span> 저장 위치</button>
+        <button class="iconbtn" data-action="reveal-vault" title="저장 파일을 탐색기에서 열기"><span class="icon-slot" data-icon="folderOpen"></span> 파일 열기</button>
+        <button class="iconbtn" data-action="open-youtube-modal" title="유튜브 좋아요·재생목록 가져오기"><span class="icon-slot" data-icon="play"></span> 유튜브 연동</button>
       </span>
-      <button class="iconbtn" id="selBtn" data-action="toggle-select-mode">☑️ 선택</button>
-      <button class="iconbtn" data-action="export-data">⬇ 내보내기</button>
-      <button class="iconbtn" data-action="import-data">⬆ 가져오기</button>
+      <button class="iconbtn" id="selBtn" data-action="toggle-select-mode"><span class="icon-slot" data-icon="checkSquare"></span> 선택</button>
+      <button class="iconbtn" data-action="export-data"><span class="icon-slot" data-icon="download"></span> 내보내기</button>
+      <button class="iconbtn" data-action="import-data"><span class="icon-slot" data-icon="upload"></span> 가져오기</button>
       <input type="file" id="importFile" accept=".json" style="display:none">
-      <button class="iconbtn" data-action="import-external" title="Google Takeout(유튜브) · 인스타그램 &quot;내 정보 다운로드&quot; 파일 가져오기">📥 외부 가져오기</button>
+      <button class="iconbtn" data-action="import-external" title="Google Takeout(유튜브) · 인스타그램 &quot;내 정보 다운로드&quot; 파일 가져오기"><span class="icon-slot" data-icon="inbox"></span> 외부 가져오기</button>
       <input type="file" id="importExternalFile" accept=".json,.csv" multiple style="display:none">
+      <button class="iconbtn icononly" id="themeBtn" data-action="toggle-theme" title="테마 전환" aria-label="테마 전환"><span class="icon-slot" data-icon="moon"></span></button>
       <div class="streak" id="streak"></div>
     </div>
   </header>
@@ -57,9 +65,17 @@
   <!-- 잊혀진 북마크 -->
   <div class="forgot" id="forgot" data-action="show-forgotten"></div>
 
-  <!-- 검색 -->
+  <!-- 검색 + 정렬 -->
   <div class="searchrow">
-    <input type="search" id="searchInput" placeholder="🔍  제목, 메모, 태그, 링크 전체 검색">
+    <div class="searchbox">
+      <span class="icon-slot" data-icon="search"></span>
+      <input type="search" id="searchInput" placeholder="제목, 메모, 태그, 링크 전체 검색" aria-label="검색">
+    </div>
+    <select class="sortselect" id="sortSelect" aria-label="정렬">
+      <option value="newest">최신순</option>
+      <option value="oldest">오래된순</option>
+      <option value="title">제목순</option>
+    </select>
   </div>
 
   <!-- 출처별 필터 -->
@@ -79,9 +95,9 @@
 <!-- 일괄 작업 바 -->
 <div class="bulkbar" id="bulkbar">
   <span class="count" id="bulkCount"></span>
-  <button data-action="bulk-seen">✓ 봄 처리</button>
-  <button data-action="open-move-modal">📁 컬렉션 이동</button>
-  <button class="danger" data-action="bulk-delete">🗑 삭제</button>
+  <button data-action="bulk-seen"><span class="icon-slot" data-icon="eye"></span> 봄 처리</button>
+  <button data-action="open-move-modal"><span class="icon-slot" data-icon="folder"></span> 컬렉션 이동</button>
+  <button class="danger" data-action="bulk-delete"><span class="icon-slot" data-icon="trash"></span> 삭제</button>
   <button data-action="toggle-select-mode">취소</button>
 </div>
 
@@ -90,7 +106,7 @@
   <div class="modal" id="modalBox"></div>
 </div>
 
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script type="module" src="js/app.js"></script>
 </body>

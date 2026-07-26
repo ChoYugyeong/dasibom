@@ -3,12 +3,15 @@ import { SOURCES } from './constants.js';
 import { initStore, reloadFromVault, persist } from './store.js';
 import { detectSource, normalizeUrl } from './utils.js';
 import { toast } from './toast.js';
+import { icon, hydrateIcons } from './icons.js';
 import * as actions from './actions.js';
 import * as modals from './modals.js';
 import { openYoutubeModal } from './youtubeModal.js';
-import { render, renderHero, renderColSelect } from './view.js';
+import { render, renderHero, renderColSelect, view } from './view.js';
 
 const desktop = !!window.dasibom;
+
+hydrateIcons(document); // 정적 마크업의 아이콘 자리표시자를 SVG로 치환
 
 const clickHandlers = {
   'toggle-select-mode': () => actions.toggleSelectMode(),
@@ -25,6 +28,7 @@ const clickHandlers = {
   'toggle-seen':        el => actions.toggleSeen(Number(el.dataset.id)),
   'toggle-pin':         el => actions.togglePin(Number(el.dataset.id)),
   'remove-item':        el => actions.removeItem(Number(el.dataset.id)),
+  'copy-item':          el => actions.copyItemUrl(Number(el.dataset.id)),
   'undo-delete':        () => actions.undoDelete(),
   'bulk-seen':          () => actions.bulkSeen(),
   'bulk-delete':        () => actions.bulkDelete(),
@@ -39,7 +43,8 @@ const clickHandlers = {
   'close-modal':        () => modals.closeModal(),
   'choose-vault':       () => chooseVault(),
   'reveal-vault':       () => window.dasibom.reveal(),
-  'open-youtube-modal': () => openYoutubeModal()
+  'open-youtube-modal': () => openYoutubeModal(),
+  'toggle-theme':       () => toggleTheme()
 };
 
 async function chooseVault() {
@@ -48,6 +53,28 @@ async function chooseVault() {
   await reloadFromVault();
   render(); renderHero();
   toast('📁 저장 위치를 바꿨어요');
+}
+
+// ── 다크모드 ───────────────────────────────
+const THEME_KEY = 'dasibom-theme';
+function systemPrefersDark() {
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function currentTheme() {
+  return document.documentElement.getAttribute('data-theme') || (systemPrefersDark() ? 'dark' : 'light');
+}
+function applyThemeButton() {
+  const isDark = currentTheme() === 'dark';
+  const btn = document.getElementById('themeBtn');
+  btn.innerHTML = icon(isDark ? 'sun' : 'moon', { size: 16 });
+  btn.setAttribute('aria-label', isDark ? '라이트 모드로 전환' : '다크 모드로 전환');
+  btn.title = isDark ? '라이트 모드로 전환' : '다크 모드로 전환';
+}
+function toggleTheme() {
+  const next = currentTheme() === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  applyThemeButton();
 }
 
 document.addEventListener('click', e => {
@@ -65,6 +92,22 @@ document.addEventListener('contextmenu', e => {
   actions.deleteCollection(chip.dataset.colId);
 });
 
+// Esc로 모달 닫기
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('modalBg').classList.contains('on')) {
+    modals.closeModal();
+  }
+});
+
+// 키보드로 선택 가능한 카드(role=button) 활성화
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const el = e.target.closest('[role="button"][data-action]');
+  if (!el) return;
+  e.preventDefault();
+  el.click();
+});
+
 // ── 저장 입력창: 출처 자동 감지 + 링크 정보 가져오기 ─────────────────
 const urlInput = document.getElementById('urlInput');
 let metaTimer = null;
@@ -74,13 +117,13 @@ function resetDraftMeta() {
   document.getElementById('thumbInput').value = '';
   document.getElementById('detMeta').style.display = 'none';
   document.getElementById('detThumb').style.display = 'none';
-  document.getElementById('detStatus').textContent = '';
+  document.getElementById('detStatus').innerHTML = '';
 }
 
 async function loadMeta(url, seq) {
   document.getElementById('detMeta').style.display = 'flex';
   const statusEl = document.getElementById('detStatus');
-  statusEl.textContent = '🔎 링크 정보를 가져오는 중…';
+  statusEl.innerHTML = icon('loader', { className: 'spin' }) + ' 링크 정보를 가져오는 중…';
   let m = {};
   try { m = await window.dasibom.fetchMeta(url); } catch (e) { m = {}; }
   if (seq !== metaSeq) return; // 그새 URL이 바뀌면 결과 폐기
@@ -94,8 +137,8 @@ async function loadMeta(url, seq) {
     const t = document.getElementById('titleInput');
     if (!t.value.trim()) t.value = m.title;
   }
-  if (m.title || m.thumb) statusEl.textContent = '✓ 제목·썸네일을 가져왔어요 (수정 가능)';
-  else statusEl.textContent = 'ⓘ 공개 정보를 찾지 못했어요 — 제목을 직접 입력하세요';
+  if (m.title || m.thumb) statusEl.innerHTML = icon('checkCircle') + ' 제목·썸네일을 가져왔어요 (수정 가능)';
+  else statusEl.innerHTML = icon('info') + ' 공개 정보를 찾지 못했어요 — 제목을 직접 입력하세요';
 }
 
 urlInput.addEventListener('input', () => {
@@ -125,6 +168,7 @@ urlInput.addEventListener('input', () => {
 urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') actions.saveBookmark(); });
 
 document.getElementById('searchInput').addEventListener('input', () => render());
+document.getElementById('sortSelect').addEventListener('change', e => { view.sortBy = e.target.value; render(); });
 document.getElementById('importFile').addEventListener('change', e => actions.importData(e));
 document.getElementById('importExternalFile').addEventListener('change', e => actions.importExternal(e));
 document.getElementById('modalBg').addEventListener('click', e => {
@@ -133,6 +177,7 @@ document.getElementById('modalBg').addEventListener('click', e => {
 
 // ── 시작 ───────────────────────────────
 async function boot() {
+  applyThemeButton();
   // 데스크톱 앱 모드면 저장 위치 버튼을 노출
   if (desktop) document.getElementById('vaultBtns').style.display = 'flex';
   await initStore();

@@ -4,6 +4,7 @@ import { state, items, persist } from './store.js';
 import { esc } from './utils.js';
 import { toast } from './toast.js';
 import { view, render } from './view.js';
+import { icon } from './icons.js';
 
 function openModal(html) {
   document.getElementById('modalBox').innerHTML = html;
@@ -57,7 +58,7 @@ export function openEditModal(id) {
   const it = items().find(i => i.id === id);
   if (!it) return;
   openModal(`
-    <h3>✎ 북마크 편집</h3>
+    <h3>${icon('pencil', { size: 18 })} 북마크 편집</h3>
     <label>제목</label>
     <input type="text" id="eTitle" value="${esc(it.title)}">
     <label>메모</label>
@@ -89,9 +90,9 @@ export function saveEdit(id) {
 export function openMoveModal() {
   if (!view.selected.size) return toast('먼저 카드를 선택해 주세요');
   openModal(`
-    <h3>📁 ${view.selected.size}개를 어디로 옮길까요?</h3>
+    <h3>${icon('folder', { size: 18 })} ${view.selected.size}개를 어디로 옮길까요?</h3>
     <div class="collist">
-      <button data-action="bulk-move" data-col-id="">🚫 컬렉션 없음</button>
+      <button data-action="bulk-move" data-col-id="">${icon('x')} 컬렉션 없음</button>
       ${state.collections.map(c => `<button data-action="bulk-move" data-col-id="${c.id}">${c.icon} ${esc(c.name)}</button>`).join('')}
     </div>
     <div class="mbtns"><button class="cancel" data-action="close-modal">닫기</button></div>`);
